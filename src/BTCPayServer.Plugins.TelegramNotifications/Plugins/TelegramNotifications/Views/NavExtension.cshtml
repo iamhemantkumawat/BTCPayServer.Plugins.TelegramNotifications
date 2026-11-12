@@ -1,0 +1,9 @@
+@model BTCPayServer.Components.MainNav.MainNavViewModel
+
+<li permission="@Policies.CanModifyServerSettings">
+    <a id="menu-item-@nameof(Plugin)"
+       class="dropdown-item@(ViewData["ActivePage"]?.ToString() == nameof(Plugin) ? " active" : "")"
+       asp-area="@Plugin.Area"
+       asp-controller="UITelegramNotifications"
+       asp-action="Index">Telegram Notifications</a>
+</li>

@@ -6,15 +6,16 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.2" />
     <Using Include="Xunit" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\BTCPayServer.Plugins.Template\BTCPayServer.Plugins.Template.csproj" />
-    <ProjectReference Include="..\..\submodules\btcpayserver\BTCPayServer.Tests\BTCPayServer.Tests.csproj" />
+    <ProjectReference Include="..\..\src\BTCPayServer.Plugins.TelegramNotifications\BTCPayServer.Plugins.TelegramNotifications.csproj" />
   </ItemGroup>
 
   <!-- This will make sure that referencing BTCPayServer doesn't put any artifact in the published directory -->

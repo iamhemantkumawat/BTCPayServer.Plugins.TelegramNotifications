@@ -1,0 +1,119 @@
+@model TelegramSettingsViewModel
+@{
+    ViewData.SetLayoutModel(new LayoutModel(Plugin.Area, "Telegram Notifications"));
+}
+
+<div class="sticky-header">
+    <h2 class="my-1">Telegram Notifications</h2>
+</div>
+
+<partial name="_StatusMessage" />
+
+<div class="alert @(Model.BotActive ? "alert-success" : "alert-danger") d-flex align-items-center mb-4" role="status">
+    <span class="me-3 fs-3" aria-hidden="true">@(Model.BotActive ? "●" : "○")</span>
+    <div>
+        <strong>Telegram bot: @Model.BotStatusTitle</strong>
+        <div>@Model.BotStatusDetail</div>
+    </div>
+</div>
+
+<form method="post" asp-action="Index">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="form-check mb-4">
+        <input asp-for="Enabled" class="form-check-input" />
+        <label asp-for="Enabled" class="form-check-label">Enable Telegram invoice notifications</label>
+    </div>
+
+    <h4>Bot and administrators</h4>
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <label asp-for="BotToken" class="form-label"></label>
+            <input asp-for="BotToken" type="password" class="form-control" autocomplete="new-password"
+                   placeholder="@(Model.HasBotToken ? "Configured — leave blank to keep it" : "123456789:bot-token")" />
+            <span asp-validation-for="BotToken" class="text-danger"></span>
+            <div class="form-text">Use a dedicated bot. The token is encrypted before it is stored.</div>
+        </div>
+        <div class="col-lg-3">
+            <label asp-for="ChatIds" class="form-label"></label>
+            <textarea asp-for="ChatIds" rows="3" class="form-control" placeholder="123456789"></textarea>
+            <span asp-validation-for="ChatIds" class="text-danger"></span>
+            <div class="form-text">Private chat or Telegram group IDs that receive alerts.</div>
+        </div>
+        <div class="col-lg-3">
+            <label asp-for="AllowedTelegramUserIds" class="form-label">Admin Telegram user IDs</label>
+            <textarea asp-for="AllowedTelegramUserIds" rows="3" class="form-control" placeholder="123456789"></textarea>
+            <span asp-validation-for="AllowedTelegramUserIds" class="text-danger"></span>
+            <div class="form-text">Only these admins can use bot commands and status-change buttons.</div>
+        </div>
+        <div class="col-lg-6">
+            <label asp-for="PublicBaseUrl" class="form-label"></label>
+            <input asp-for="PublicBaseUrl" class="form-control" placeholder="https://btcpay.example.com" />
+            <span asp-validation-for="PublicBaseUrl" class="text-danger"></span>
+        </div>
+        <div class="col-lg-3">
+            <label asp-for="TimeZoneId" class="form-label"></label>
+            <input asp-for="TimeZoneId" class="form-control" placeholder="Asia/Kolkata" />
+            <span asp-validation-for="TimeZoneId" class="text-danger"></span>
+        </div>
+        <div class="col-lg-3">
+            <label asp-for="ActionExpiryMinutes" class="form-label">Action expiry (minutes)</label>
+            <input asp-for="ActionExpiryMinutes" class="form-control" />
+            <span asp-validation-for="ActionExpiryMinutes" class="text-danger"></span>
+        </div>
+    </div>
+
+    <h4>Stores</h4>
+    <div class="form-check mb-2">
+        <input asp-for="AllStores" class="form-check-input" />
+        <label asp-for="AllStores" class="form-check-label">Enable for all current and future stores</label>
+    </div>
+    <div class="row mb-4">
+        @foreach (var store in Model.Stores)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" name="StoreIds" value="@store.Id"
+                           id="store-@store.Id" checked="@(Model.StoreIds.Contains(store.Id))" />
+                    <label class="form-check-label" for="store-@store.Id">@store.Name</label>
+                </div>
+            </div>
+        }
+        <span asp-validation-for="StoreIds" class="text-danger"></span>
+    </div>
+
+    <h4>Events to notify</h4>
+    <div class="row mb-4">
+        <div class="col-md-4"><div class="form-check"><input asp-for="NotifyInvoiceCreated" class="form-check-input" /><label asp-for="NotifyInvoiceCreated" class="form-check-label">Invoice created</label></div></div>
+        <div class="col-md-4"><div class="form-check"><input asp-for="NotifyPaymentReceived" class="form-check-input" /><label asp-for="NotifyPaymentReceived" class="form-check-label">Payment received</label></div></div>
+        <div class="col-md-4"><div class="form-check"><input asp-for="NotifyPaymentSettled" class="form-check-input" /><label asp-for="NotifyPaymentSettled" class="form-check-label">Payment confirmed</label></div></div>
+        <div class="col-md-4"><div class="form-check"><input asp-for="NotifyProcessing" class="form-check-input" /><label asp-for="NotifyProcessing" class="form-check-label">Paid in full / overpaid</label></div></div>
+        <div class="col-md-4"><div class="form-check"><input asp-for="NotifyExpired" class="form-check-input" /><label asp-for="NotifyExpired" class="form-check-label">Expired / partial / paid late</label></div></div>
+        <div class="col-md-4"><div class="form-check"><input asp-for="NotifySettled" class="form-check-input" /><label asp-for="NotifySettled" class="form-check-label">Invoice settled</label></div></div>
+        <div class="col-md-4"><div class="form-check"><input asp-for="NotifyInvalid" class="form-check-input" /><label asp-for="NotifyInvalid" class="form-check-label">Invalid / manually rejected</label></div></div>
+        <div class="col-md-4"><div class="form-check"><input asp-for="NotifyRefunds" class="form-check-input" /><label asp-for="NotifyRefunds" class="form-check-label">Refund created</label></div></div>
+    </div>
+
+    <h4>Metadata, privacy and actions</h4>
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="form-check"><input asp-for="IncludeAllMetadata" class="form-check-input" /><label asp-for="IncludeAllMetadata" class="form-check-label">Include all safe metadata fields</label></div>
+            <label asp-for="MetadataKeys" class="form-label mt-2">Metadata keys when “all” is disabled</label>
+            <input asp-for="MetadataKeys" class="form-control" placeholder="username, plan, product" />
+            <div class="form-text">Secret-like fields (tokens, passwords, keys and seeds) are always blocked.</div>
+        </div>
+        <div class="col-lg-6">
+            <div class="form-check"><input asp-for="IncludeBuyerEmail" class="form-check-input" /><label asp-for="IncludeBuyerEmail" class="form-check-label">Include buyer email</label></div>
+            <div class="form-check"><input asp-for="IncludeBuyerPhone" class="form-check-input" /><label asp-for="IncludeBuyerPhone" class="form-check-label">Include buyer phone</label></div>
+            <div class="form-check"><input asp-for="IncludeBuyerAddress" class="form-check-input" /><label asp-for="IncludeBuyerAddress" class="form-check-label">Include buyer address</label></div>
+            <div class="form-check mt-3"><input asp-for="EnableManualActions" class="form-check-input" /><label asp-for="EnableManualActions" class="form-check-label">Enable Mark Settled / Mark Invalid buttons</label></div>
+        </div>
+    </div>
+
+    <div class="alert alert-warning">
+        Marking an invoice invalid does not reverse or refund a blockchain payment. Manual actions change BTCPay's invoice accounting status and are audit logged.
+    </div>
+
+    <button type="submit" name="command" value="save" class="btn btn-primary">Save</button>
+    <button type="submit" name="command" value="test" class="btn btn-secondary ms-2">Save and send test</button>
+</form>

@@ -1,161 +1,64 @@
-# BTCPay Server Plugin Template
+# BTCPay Server Telegram Notifications
 
-A template for your own [BTCPay Server](https://github.com/btcpayserver) plugin.
+Server-wide Telegram alerts for BTCPay Server invoices, with configurable metadata and protected invoice-status actions.
 
-Learn more in our [plugin documentation](submodules/btcpayserver/docs/developers/plugins/README.md).
+Created and maintained by **Hemant**.
 
-## Requirements
+This release targets **BTCPay Server 2.4.7 through 2.4.x**.
 
-- .NET SDK 10.0 or later
-- Git with submodule support
-- Docker, for running the BTCPay Server development dependencies
+## Features
 
-## Getting started
+- Notifications for invoice creation, payment receipt, payment confirmation, paid-in-full/overpaid, expiration, partial payment, payment after expiration, settlement, invalidation, confirmation failure, and refunds.
+- Amount requested, amount received, remaining or overpaid amount, payment method, transaction ID, destination address, order ID, store, invoice ID, and local time.
+- Optional invoice metadata with a key allowlist or all safe fields.
+- Optional buyer email, phone, and postal address fields.
+- Multiple destination chats and multiple authorized Telegram administrators.
+- All-store or selected-store scope.
+- Per-event notification switches.
+- **Mark Settled** and **Mark Invalid** Telegram buttons with an explicit confirmation step.
+- One-time, expiring action tokens, Telegram-user allowlisting, and a persistent audit trail.
+- Duplicate-event protection and persistent Telegram update offsets.
+- Bot token encryption through BTCPay Server's Data Protection service.
+- `/start` and `/status` health replies for configured administrators, with a generic rejection for unauthorized users.
 
-First, clone this repository:
+## Install
 
-```bash
-mkdir my-plugin && cd my-plugin
-git clone --recurse-submodules https://github.com/btcpayserver/btcpayserver-plugin-template.git .
-```
+1. In BTCPay Server, open **Manage Plugins**.
+2. Upload `BTCPayServer.Plugins.TelegramNotifications.btcpay`.
+3. Restart BTCPay Server when prompted.
+4. As a server administrator, open **Server Settings → Telegram Notifications**.
 
-If you already cloned without submodules, initialize them with:
+The plugin is disabled by default. Installation alone does not contact Telegram.
 
-```bash
-git submodule update --init --recursive
-```
+## Configure Telegram
 
-### Update the btcpayserver submodule to the latest tagged version
+1. Create a dedicated Telegram bot with `@BotFather` and copy its new bot token.
+2. Open the bot in Telegram and press **Start**. For a group, add the bot to the group.
+3. Enter one or more destination chat IDs.
+4. Enter the numeric Telegram user IDs allowed to use bot commands and press manual action buttons.
+5. Select all stores or specific stores, choose events and metadata, then use **Save and send test**.
 
-Make sure that your submodules reference the latest stable version of BTCPay Server.
+Use a newly rotated token if a token has ever appeared in a screenshot, chat, log, or source file. Never commit a bot token to the repository.
 
-```bash
-cd submodules/btcpayserver
-git fetch --tags
-latest_tag=$(
-  git tag -l 'v[0-9]*.[0-9]*.[0-9]*' \
-    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-    | sort -V \
-    | tail -n 1
-)
-git checkout "$latest_tag"
-cd ../..
-```
+After saving, an authorized administrator can send `/start` or `/status` to confirm that the bot is active. Users whose Telegram ID or chat is not configured receive only a generic authorization error and no BTCPay details.
 
-Update `src/BTCPayServer.Plugins.Template/Plugin.cs`'s `PluginDependency` with the version of BTCPayServer that you fetched in `latest_tag`.
+## Manual action safety
 
-### Rename the plugin
+Manual action buttons are shown only when BTCPay reports that the invoice can be changed. The first tap displays a confirmation button; only an allowlisted Telegram user can confirm. Tokens are random, bound to the invoice and destination chat, expire, and cannot be reused.
 
-For renaming the plugin, choose a name following .NET assembly naming conventions: PascalCase, optionally separated by dots. For example: `MyPlugin` or `MyCompany.MyPlugin`.
+**Mark Invalid does not reverse or refund a Bitcoin or other blockchain payment.** It changes BTCPay's accounting status only. Refunds must be handled separately and should always be verified against the original invoice and transaction.
 
-Then replace all occurrences of `BTCPayServer.Plugins.Template` with `PLUGIN_NAME`.
+## Metadata and privacy
 
-Here is a script you can run to do this automatically:
-```bash
-PLUGIN_NAME="MyPlugin"
-OLD_NAME="BTCPayServer.Plugins.Template"
-AREA_NAME="MyPlugin"
-OLD_AREA="TemplateArea"
-export OLD_NAME PLUGIN_NAME AREA_NAME OLD_AREA
+Secret-like metadata keys containing terms such as `token`, `password`, `secret`, `seed`, or `private key` are always omitted. Buyer email, phone, and address are opt-in because Telegram chats may be less private than BTCPay Server.
 
-git grep -l -z "$OLD_NAME" -- . ':!submodules' | xargs -0 perl -pi -e 's/\Q$ENV{OLD_NAME}\E/$ENV{PLUGIN_NAME}/g'
+## Build and test
 
-git mv "src/$OLD_NAME" "src/$PLUGIN_NAME"
-git mv "src/$PLUGIN_NAME/$OLD_NAME.csproj" "src/$PLUGIN_NAME/$PLUGIN_NAME.csproj"
-git mv "src/$PLUGIN_NAME/Plugins/$OLD_AREA" "src/$PLUGIN_NAME/Plugins/$AREA_NAME"
-perl -pi -e 's/\Q"$ENV{OLD_AREA}"\E/"$ENV{AREA_NAME}"/' "src/$PLUGIN_NAME/Plugin.cs"
-
-git mv "tests/$OLD_NAME.Tests" "tests/$PLUGIN_NAME.Tests"
-git mv "tests/$PLUGIN_NAME.Tests/$OLD_NAME.Tests.csproj" "tests/$PLUGIN_NAME.Tests/$PLUGIN_NAME.Tests.csproj"
-
-git mv "$OLD_NAME.slnx" "$PLUGIN_NAME.slnx"
-```
-
-Then update the plugin metadata in `src/<YourPluginName>/<YourPluginName>.csproj`:
-
-- `Product`
-- `Description`
-- `Version`
-
-The area name must match the directory between `Plugins` and `Views`. The
-script updates both. Then customize the example controller, route, view text,
-and test for your plugin.
-
-Verify that the plugin builds:
+The repository pins the BTCPay Server submodule to `v2.4.7`.
 
 ```bash
-dotnet build
+dotnet build src/BTCPayServer.Plugins.TelegramNotifications/BTCPayServer.Plugins.TelegramNotifications.csproj -c Release
+dotnet test tests/BTCPayServer.Plugins.TelegramNotifications.Tests/BTCPayServer.Plugins.TelegramNotifications.Tests.csproj -c Release
 ```
 
-### Clean up template project references
-
-Finally, clean up the remaining template project references.
-
-Replace this README with documentation for your own plugin.
-Keep it user-centric. Document what the plugin does and how to configure it. We advise to include screenshots and video.
-Avoid developer-centric jargon.
-
-You may also want to review and update:
-
-- [LICENSE](LICENSE)
-- package metadata in your plugin `.csproj`
-
-### Switching this branch to your own git repository
-
-Switch `origin` to your own repository:
-
-```bash
-git remote set-url origin git@github.com:<your-github-user>/<your-plugin-repository>.git
-```
-
-If you want to start your plugin without the template's git history, create a new initial commit:
-
-```bash
-git switch --orphan initial
-git add -A
-git commit -m "Initial commit"
-git branch -M main
-```
-
-Then push it to your repository.
-
-```bash
-git push --force-with-lease origin main
-```
-
-## Debugging the plugin
-
-Register the plugin with the BTCPay Server development environment:
-
-```bash
-./plugin-register.sh
-```
-
-It will configure BTCPay Server for loading your plugin during debug.
-
-Start the BTCPay Server development dependencies:
-
-```bash
-cd submodules/btcpayserver/BTCPayServer.Tests
-docker compose up -d dev
-```
-
-Open the solution file in your IDE and use the `BTCPayServer: Bitcoin-HTTPS` launch profile. When the debugger starts BTCPay Server, it should load your plugin. A breakpoint in `src/<YourPluginName>/Plugin.cs`, such as inside `Plugin.Execute`, should be hit during startup.
-
-Sign in and open `/template` to verify the example page and account-menu entry.
-
-## Adding plugin code
-
-The template includes a working authenticated controller, Razor view, and
-account-menu UI extension. Views are stored under
-`Plugins/{AreaName}/Views`, matching BTCPay Server's area view conventions, so
-controller actions can use `View()` without an explicit view path. UI
-extensions still use `Plugin.ViewsDirectory` because they render outside the
-controller's area context.
-
-Register additional services, controllers, hosted services, migrations, or
-other plugin components from `Plugin.Execute`.
-
-If your plugin needs Entity Framework or bundled project dependencies, see the commented examples in the plugin `.csproj` file.
-
-You can take examples from [other plugins](https://plugin-builder.btcpayserver.org/) and BTCPay Server's own system plugins in `submodules/btcpayserver/BTCPayServer/Plugins`.
+Package the Release DLL at the root of a ZIP archive and give the archive the `.btcpay` extension.
