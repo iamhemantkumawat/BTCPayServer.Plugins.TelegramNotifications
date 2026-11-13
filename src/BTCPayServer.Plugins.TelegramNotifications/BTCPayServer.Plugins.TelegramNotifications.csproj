@@ -8,7 +8,7 @@
     <Authors>Hemant</Authors>
     <RepositoryUrl>https://github.com/iamhemantkumawat/BTCPayServer.Plugins.TelegramNotifications</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>0.1.3</Version>
+    <Version>0.1.4</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
